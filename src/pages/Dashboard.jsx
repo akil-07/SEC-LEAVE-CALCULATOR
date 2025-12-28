@@ -11,6 +11,7 @@ export default function Dashboard() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [needsSetup, setNeedsSetup] = useState(false);
+    const [missingTimetable, setMissingTimetable] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -20,6 +21,11 @@ export default function Dashboard() {
 
     const loadData = () => {
         const data = storageService.getData(user.id);
+
+        if (data?.settings) {
+            const hasTm = data.settings.timetable && Object.keys(data.settings.timetable).length > 0;
+            setMissingTimetable(!hasTm);
+        }
         if (!data || !data.settings.semesterStart || data.settings.subjects.length === 0) {
             setNeedsSetup(true);
             setLoading(false);
@@ -59,7 +65,7 @@ export default function Dashboard() {
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-bold text-white">Dashboard</h2>
-                    <p className="text-slate-400">Overview of your attendance performance.</p>
+                    <p className="text-slate-400">Overview of your attendance. Unmarked days count as Present.</p>
                 </div>
                 <div className="flex gap-2">
                     <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-green-400 text-sm">
@@ -70,6 +76,21 @@ export default function Dashboard() {
                     </div>
                 </div>
             </header>
+
+            {missingTimetable && (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-xl flex items-center gap-4 mb-6 animate-fade-in">
+                    <AlertCircle className="text-yellow-500 shrink-0" size={24} />
+                    <div className="flex-1">
+                        <h3 className="font-bold text-yellow-500">Action Required: Default Timetable</h3>
+                        <p className="text-sm text-slate-400 mt-1">
+                            To enable automatic attendance (Present by default), please set your weekly schedule in Settings.
+                        </p>
+                    </div>
+                    <Link to="/settings" className="px-4 py-2 rounded-lg bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 transition-colors flex items-center gap-2 font-medium shrink-0">
+                        Setup Timetable <ArrowRight size={16} />
+                    </Link>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {Object.entries(stats).map(([subject, data]) => {
